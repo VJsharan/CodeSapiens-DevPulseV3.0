@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  devpulse:
+    build: .
+    ports:
+      - "3000:3000"
+    container_name: devpulse-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    volumes:
+      # Optional: Mount for development
+      # - .:/app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
