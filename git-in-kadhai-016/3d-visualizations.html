@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevPulse 3D Visualizations</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/components.css">
+    <link rel="stylesheet" href="src/styles/themes.css">
+    <link rel="stylesheet" href="src/styles/3d-visualizations.css">
+    
+    <!-- Three.js ES Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body class="theme-auto">
+    <div class="viz-container">
+        <!-- Header -->
+        <header class="viz-header">
+            <div class="header-content">
+                <div class="brand">
+                    <h1>🌌 DevPulse 3D Visualizations</h1>
+                    <p>Immersive GitHub Analytics Experience for <span id="user-name-3d">Demo User</span></p>
+                </div>
+                <div class="header-actions">
+                    <button id="back-to-dashboard" class="action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M19 12H5"/>
+                            <path d="M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Dashboard
+                    </button>
+                    <button id="theme-toggle-3d" class="action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Visualization Controls -->
+        <div class="viz-controls">
+            <div class="control-panel">
+                <h3>🎮 Visualization Controls</h3>
+                <div class="control-grid">
+                    <div class="control-group">
+                        <label for="viz-type">Visualization Type</label>
+                        <select id="viz-type" class="control-select">
+                            <option value="repository-network">📊 Repository Network</option>
+                            <option value="language-galaxy">🌌 Language Galaxy</option>
+                            <option value="contribution-terrain">🏔️ Contribution Terrain</option>
+                            <option value="code-universe">🌠 Code Universe</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="animation-speed">Animation Speed</label>
+                        <input type="range" id="animation-speed" min="0.1" max="2" step="0.1" value="1" class="control-slider">
+                        <span id="speed-value">1.0x</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="particle-count">Particle Density</label>
+                        <input type="range" id="particle-count" min="50" max="500" step="50" value="200" class="control-slider">
+                        <span id="particle-value">200</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <button id="auto-rotate" class="control-btn active">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 12c0 5-4 9-9 9s-9-4-9-9 4-9 9-9c1.5 0 2.9.4 4.1 1"/>
+                                <path d="M16 7h5v5"/>
+                            </svg>
+                            Auto Rotate
+                        </button>
+                        
+                        <button id="reset-view" class="control-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M1 4v6h6"/>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                            </svg>
+                            Reset View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main 3D Canvas -->
+        <div class="viz-main">
+            <div id="three-canvas-container" class="three-canvas-container">
+                <!-- Three.js canvas will be inserted here -->
+            </div>
+            
+            <!-- Loading Overlay -->
+            <div id="viz-loading" class="viz-loading">
+                <div class="loading-content">
+                    <div class="loading-spinner">
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-ring"></div>
+                    </div>
+                    <h3> Initializing 3D Visualization</h3>
+                    <p id="loading-status">Setting up Three.js environment...</p>
+                </div>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="viz-error" class="error-message" style="display: none;">
+                <div class="error-content">
+                    <h3>❌ Initialization Error</h3>
+                    <p id="error-text">Something went wrong...</p>
+                    <button onclick="location.reload()" class="retry-btn">🔄 Retry</button>
+                </div>
+            </div>
+            
+            <!-- Info Panel -->
+            <div id="viz-info" class="viz-info">
+                <div class="info-content">
+                    <h4 id="info-title">🌟 Repository Network</h4>
+                    <div id="info-details">
+                        <p>Interactive 3D visualization of repository relationships</p>
+                        <ul>
+                            <li>🔗 Nodes represent repositories</li>
+                            <li>📏 Size indicates stars/activity</li>
+                            <li>🌈 Colors show programming languages</li>
+                            <li>⚡ Lines connect related projects</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Panel -->
+        <div class="viz-data-panel">
+            <div class="data-header">
+                <h3>📊 Live Data Metrics</h3>
+                <button id="toggle-data-panel" class="toggle-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="data-content">
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">�</div>
+                        <div class="metric-info">
+                            <span class="metric-value" id="total-repos">0</span>
+                            <span class="metric-label">Repositories</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">💻</div>
+                        <div class="metric-info">
+                            <span class="metric-value" id="total-languages">0</span>
+                            <span class="metric-label">Languages</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">�📈</div>
+                        <div class="metric-info">
+                            <span class="metric-value" id="total-nodes">0</span>
+                            <span class="metric-label">Total Nodes</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔗</div>
+                        <div class="metric-info">
+                            <span class="metric-value" id="total-connections">0</span>
+                            <span class="metric-label">Connections</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🎨</div>
+                        <div class="metric-info">
+                            <span class="metric-value" id="active-particles">0</span>
+                            <span class="metric-label">Particles</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚡</div>
+                        <div class="metric-info">
+                            <span class="metric-value" id="fps-counter">60</span>
+                            <span class="metric-label">FPS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript ES Module -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
+        // DevPulse 3D Visualizations Class
+        class DevPulse3D {
+            constructor() {
+                // Core Three.js components
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.animationId = null;
+                
+                // Visualization data
+                this.userData = null;
+                this.repositories = [];
+                this.languages = [];
+                
+                // 3D Objects
+                this.repositoryNodes = [];
+                this.languageParticles = [];
+                this.connectionLines = [];
+                
+                // Settings
+                this.settings = {
+                    animationSpeed: 1.0,
+                    particleCount: 200,
+                    autoRotate: true,
+                    currentVisualization: 'repository-network'
+                };
+                
+                // Performance tracking
+                this.performance = {
+                    fps: 0,
+                    lastTime: 0,
+                    frameCount: 0
+                };
+                
+                // Bind methods
+                this.animate = this.animate.bind(this);
+                this.onWindowResize = this.onWindowResize.bind(this);
+            }
+
+            // ================================
+            // INITIALIZATION
+            // ================================
+            
+            async init() {
+                try {
+                    console.log('🌌 Initializing DevPulse 3D Visualizations...');
+                    
+                    // Initialize Three.js scene
+                    this.initScene();
+                    this.initCamera();
+                    this.initRenderer();
+                    this.initLighting();
+                    this.initControls();
+                    
+                    // Load data and create visualizations
+                    this.loadUserData();
+                    this.setupEventListeners();
+                    this.syncUIControls();
+                    this.createInitialVisualization();
+                    
+                    // Start animation loop
+                    this.animate();
+                    
+                    console.log('✅ 3D Visualizations initialized successfully!');
+                    this.hideLoading();
+                    
+                } catch (error) {
+                    console.error('❌ 3D Visualization initialization failed:', error);
+                    this.showError('Failed to initialize 3D visualizations: ' + error.message);
+                }
+            }
+            
+            initScene() {
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x0a0a0a);
+                this.scene.fog = new THREE.Fog(0x0a0a0a, 50, 200);
+            }
+            
+            initCamera() {
+                const container = document.getElementById('three-canvas-container');
+                const aspect = container.clientWidth / container.clientHeight;
+                this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+                this.camera.position.set(0, 0, 50);
+            }
+            
+            initRenderer() {
+                const container = document.getElementById('three-canvas-container');
+                this.renderer = new THREE.WebGLRenderer({ 
+                    antialias: true,
+                    alpha: true 
+                });
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                container.appendChild(this.renderer.domElement);
+            }
+            
+            initLighting() {
+                // Ambient light
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+                this.scene.add(ambientLight);
+                
+                // Directional light
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(50, 50, 50);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                this.scene.add(directionalLight);
+                
+                // Point lights for atmosphere
+                const pointLight1 = new THREE.PointLight(0x00aaff, 0.6, 100);
+                pointLight1.position.set(25, 25, 25);
+                this.scene.add(pointLight1);
+                
+                const pointLight2 = new THREE.PointLight(0xff6600, 0.4, 100);
+                pointLight2.position.set(-25, -25, 25);
+                this.scene.add(pointLight2);
+            }
+            
+            initControls() {
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.autoRotate = this.settings.autoRotate;
+                this.controls.autoRotateSpeed = 0.5;
+                this.controls.maxDistance = 200;
+                this.controls.minDistance = 10;
+            }
+
+            // ================================
+            // DATA MANAGEMENT
+            // ================================
+            
+            loadUserData() {
+                try {
+                    // Try to get data from opener window first
+                    if (window.opener && window.opener.userData) {
+                        this.userData = window.opener.userData;
+                        console.log('📊 User data loaded from parent window:', this.userData);
+                    } 
+                    // Fallback to localStorage
+                    else if (localStorage.getItem('devpulse_user_data')) {
+                        this.userData = JSON.parse(localStorage.getItem('devpulse_user_data'));
+                        console.log('📊 User data loaded from localStorage:', this.userData);
+                    }
+                    // Generate sample data
+                    else {
+                        this.userData = this.generateSampleData();
+                        console.log('📊 Using sample data for demonstration');
+                    }
+                    
+                    this.processUserData();
+                    
+                } catch (error) {
+                    console.warn('⚠️ Could not load user data:', error);
+                    this.userData = this.generateSampleData();
+                    this.processUserData();
+                }
+            }
+            
+            processUserData() {
+                if (!this.userData) return;
+                
+                // Process repositories
+                if (this.userData.repositories) {
+                    this.repositories = this.userData.repositories.slice(0, 20); // Limit for performance
+                }
+                
+                // Process languages
+                if (this.userData.languages) {
+                    this.languages = Object.entries(this.userData.languages)
+                        .map(([name, count]) => ({ name, count }))
+                        .sort((a, b) => b.count - a.count)
+                        .slice(0, 10);
+                }
+                
+                this.updateDataDisplay();
+            }
+            
+            generateSampleData() {
+                const sampleLanguages = [
+                    { name: 'JavaScript', count: 45 },
+                    { name: 'Python', count: 32 },
+                    { name: 'TypeScript', count: 28 },
+                    { name: 'CSS', count: 25 },
+                    { name: 'HTML', count: 22 },
+                    { name: 'Java', count: 18 },
+                    { name: 'C++', count: 15 },
+                    { name: 'Go', count: 12 }
+                ];
+                
+                const sampleRepos = [];
+                for (let i = 0; i < 15; i++) {
+                    sampleRepos.push({
+                        name: `Project-${i + 1}`,
+                        language: sampleLanguages[Math.floor(Math.random() * sampleLanguages.length)].name,
+                        stars: Math.floor(Math.random() * 100) + 1,
+                        forks: Math.floor(Math.random() * 50) + 1,
+                        size: Math.floor(Math.random() * 10000) + 100
+                    });
+                }
+                
+                return {
+                    login: 'DemoUser',
+                    name: 'Demo User',
+                    repositories: sampleRepos,
+                    languages: Object.fromEntries(sampleLanguages.map(l => [l.name, l.count]))
+                };
+            }
+
+            // ================================
+            // VISUALIZATION CREATION
+            // ================================
+            
+            createInitialVisualization() {
+                this.switchVisualization(this.settings.currentVisualization);
+            }
+            
+            switchVisualization(type) {
+                this.clearScene();
+                this.settings.currentVisualization = type;
+                
+                switch (type) {
+                    case 'repository-network':
+                        this.createRepositoryNetwork();
+                        break;
+                    case 'language-galaxy':
+                        this.createLanguageGalaxy();
+                        break;
+                    case 'contribution-terrain':
+                        this.createContributionTerrain();
+                        break;
+                    case 'code-universe':
+                        this.createCodeUniverse();
+                        break;
+                    default:
+                        this.createRepositoryNetwork();
+                }
+                
+                this.updateVisualizationInfo();
+            }
+            
+            createRepositoryNetwork() {
+                if (!this.repositories.length) return;
+                
+                const nodeGeometry = new THREE.SphereGeometry(1, 16, 16);
+                const connectionMaterial = new THREE.LineBasicMaterial({ color: 0x444444, opacity: 0.3, transparent: true });
+                
+                this.repositories.forEach((repo, index) => {
+                    // Create repository node
+                    const color = this.getLanguageColor(repo.language);
+                    const material = new THREE.MeshPhongMaterial({ color });
+                    const node = new THREE.Mesh(nodeGeometry, material);
+                    
+                    // Position nodes in a spherical layout
+                    const phi = Math.acos(-1 + (2 * index) / this.repositories.length);
+                    const theta = Math.sqrt(this.repositories.length * Math.PI) * phi;
+                    const radius = 30;
+                    
+                    node.position.setFromSphericalCoords(radius, phi, theta);
+                    node.scale.setScalar(Math.log(repo.stars + 1) * 0.5 + 0.5);
+                    node.userData = repo;
+                    
+                    this.scene.add(node);
+                    this.repositoryNodes.push(node);
+                    
+                    // Create connections to nearby repositories
+                    if (index > 0 && Math.random() > 0.7) {
+                        const connectionGeometry = new THREE.BufferGeometry().setFromPoints([
+                            this.repositoryNodes[index - 1].position,
+                            node.position
+                        ]);
+                        const connection = new THREE.Line(connectionGeometry, connectionMaterial);
+                        this.scene.add(connection);
+                        this.connectionLines.push(connection);
+                    }
+                });
+                
+                console.log(`🌐 Created repository network with ${this.repositoryNodes.length} nodes`);
+            }
+            
+            createLanguageGalaxy() {
+                if (!this.languages.length) return;
+                
+                const particleGeometry = new THREE.BufferGeometry();
+                const particleCount = this.settings.particleCount;
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                // Create galaxy structure
+                for (let i = 0; i < particleCount; i++) {
+                    const i3 = i * 3;
+                    
+                    // Spiral galaxy pattern
+                    const radius = Math.random() * 40 + 5;
+                    const spinAngle = radius * 0.1;
+                    const branchAngle = (i % 3) * (Math.PI * 2) / 3;
+                    
+                    const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 5;
+                    const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 5;
+                    const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 5;
+                    
+                    positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+                    positions[i3 + 1] = randomY;
+                    positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+                    
+                    // Color based on language
+                    const languageIndex = Math.floor((i / particleCount) * this.languages.length);
+                    const color = new THREE.Color(this.getLanguageColor(this.languages[languageIndex]?.name || 'Other'));
+                    colors[i3] = color.r;
+                    colors[i3 + 1] = color.g;
+                    colors[i3 + 2] = color.b;
+                }
+                
+                particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const particleMaterial = new THREE.PointsMaterial({
+                    size: 0.5,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    sizeAttenuation: true
+                });
+                
+                const particles = new THREE.Points(particleGeometry, particleMaterial);
+                this.scene.add(particles);
+                this.languageParticles.push(particles);
+                
+                console.log(`🌌 Created language galaxy with ${particleCount} particles`);
+            }
+            
+            createContributionTerrain() {
+                const geometry = new THREE.PlaneGeometry(60, 60, 32, 32);
+                const positions = geometry.attributes.position.array;
+                
+                // Create terrain heights based on contribution pattern
+                for (let i = 0; i < positions.length; i += 3) {
+                    const x = positions[i];
+                    const y = positions[i + 1];
+                    positions[i + 2] = Math.sin(x * 0.1) * Math.cos(y * 0.1) * 5 + Math.random() * 2;
+                }
+                
+                geometry.attributes.position.needsUpdate = true;
+                geometry.computeVertexNormals();
+                
+                const material = new THREE.MeshLambertMaterial({
+                    color: 0x00ff88,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                const terrain = new THREE.Mesh(geometry, material);
+                terrain.rotation.x = -Math.PI / 2;
+                this.scene.add(terrain);
+                
+                console.log('🏔️ Created contribution terrain');
+            }
+            
+            createCodeUniverse() {
+                // Create multiple layers of particles for universe effect
+                for (let layer = 0; layer < 3; layer++) {
+                    const particleGeometry = new THREE.BufferGeometry();
+                    const particleCount = this.settings.particleCount * (layer + 1);
+                    const positions = new Float32Array(particleCount * 3);
+                    
+                    for (let i = 0; i < particleCount; i++) {
+                        const i3 = i * 3;
+                        positions[i3] = (Math.random() - 0.5) * 100;
+                        positions[i3 + 1] = (Math.random() - 0.5) * 100;
+                        positions[i3 + 2] = (Math.random() - 0.5) * 100;
+                    }
+                    
+                    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    
+                    const particleMaterial = new THREE.PointsMaterial({
+                        color: layer === 0 ? 0xffffff : layer === 1 ? 0x00aaff : 0xff6600,
+                        size: 0.5 - layer * 0.1,
+                        transparent: true,
+                        opacity: 0.6 - layer * 0.2,
+                        sizeAttenuation: true
+                    });
+                    
+                    const particles = new THREE.Points(particleGeometry, particleMaterial);
+                    this.scene.add(particles);
+                    this.languageParticles.push(particles);
+                }
+                
+                console.log('🌠 Created code universe with multiple particle layers');
+            }
+
+            // ================================
+            // ANIMATION & RENDERING
+            // ================================
+            
+            animate() {
+                this.animationId = requestAnimationFrame(this.animate);
+                
+                // Update controls
+                this.controls.update();
+                
+                // Animate objects based on current visualization
+                this.updateAnimations();
+                
+                // Update performance metrics
+                this.updatePerformance();
+                
+                // Render scene
+                this.renderer.render(this.scene, this.camera);
+            }
+            
+            updateAnimations() {
+                const time = Date.now() * 0.001 * this.settings.animationSpeed;
+                
+                // Animate repository nodes
+                this.repositoryNodes.forEach((node, index) => {
+                    node.rotation.y = time + index * 0.1;
+                    node.position.y += Math.sin(time + index) * 0.01;
+                });
+                
+                // Animate particles
+                this.languageParticles.forEach((particles, index) => {
+                    particles.rotation.y = time * 0.1 * (index + 1);
+                    particles.rotation.x = time * 0.05 * (index + 1);
+                });
+            }
+            
+            updatePerformance() {
+                this.performance.frameCount++;
+                const currentTime = Date.now();
+                
+                if (currentTime - this.performance.lastTime >= 1000) {
+                    this.performance.fps = this.performance.frameCount;
+                    this.performance.frameCount = 0;
+                    this.performance.lastTime = currentTime;
+                    
+                    // Update FPS display
+                    const fpsElement = document.getElementById('fps-counter');
+                    if (fpsElement) {
+                        fpsElement.textContent = `${this.performance.fps} FPS`;
+                    }
+                }
+            }
+
+            // ================================
+            // UTILITY METHODS
+            // ================================
+            
+            getLanguageColor(language) {
+                const colors = {
+                    'JavaScript': 0xf7df1e,
+                    'TypeScript': 0x3178c6,
+                    'Python': 0x3776ab,
+                    'Java': 0xed8b00,
+                    'C++': 0x00599c,
+                    'C#': 0x239120,
+                    'Go': 0x00add8,
+                    'Rust': 0x000000,
+                    'PHP': 0x777bb4,
+                    'Ruby': 0x701516,
+                    'CSS': 0x1572b6,
+                    'HTML': 0xe34f26,
+                    'Other': 0x888888
+                };
+                return colors[language] || colors['Other'];
+            }
+            
+            clearScene() {
+                // Remove all visualization objects
+                [...this.repositoryNodes, ...this.languageParticles, ...this.connectionLines].forEach(obj => {
+                    if (obj.geometry) obj.geometry.dispose();
+                    if (obj.material) obj.material.dispose();
+                    this.scene.remove(obj);
+                });
+                
+                this.repositoryNodes = [];
+                this.languageParticles = [];
+                this.connectionLines = [];
+            }
+            
+            setupEventListeners() {
+                // Window resize
+                window.addEventListener('resize', this.onWindowResize);
+                
+                // Visualization type dropdown
+                document.getElementById('viz-type')?.addEventListener('change', (e) => {
+                    this.switchVisualization(e.target.value);
+                });
+                
+                // Animation speed slider
+                document.getElementById('animation-speed')?.addEventListener('input', (e) => {
+                    this.settings.animationSpeed = parseFloat(e.target.value);
+                    const speedValue = document.getElementById('speed-value');
+                    if (speedValue) {
+                        speedValue.textContent = `${e.target.value}x`;
+                    }
+                });
+                
+                // Particle count slider
+                document.getElementById('particle-count')?.addEventListener('input', (e) => {
+                    this.settings.particleCount = parseInt(e.target.value);
+                    const particleValue = document.getElementById('particle-value');
+                    if (particleValue) {
+                        particleValue.textContent = e.target.value;
+                    }
+                    
+                    // Recreate visualization if it uses particles
+                    if (this.settings.currentVisualization === 'language-galaxy' || 
+                        this.settings.currentVisualization === 'code-universe') {
+                        this.switchVisualization(this.settings.currentVisualization);
+                    }
+                });
+                
+                // Auto rotate button
+                document.getElementById('auto-rotate')?.addEventListener('click', (e) => {
+                    this.settings.autoRotate = !this.settings.autoRotate;
+                    this.controls.autoRotate = this.settings.autoRotate;
+                    
+                    // Toggle button visual state
+                    e.target.classList.toggle('active', this.settings.autoRotate);
+                });
+                
+                // Reset view button
+                document.getElementById('reset-view')?.addEventListener('click', () => {
+                    this.camera.position.set(0, 0, 50);
+                    this.controls.reset();
+                });
+                
+                // Theme toggle
+                document.getElementById('theme-toggle-3d')?.addEventListener('click', () => {
+                    document.body.classList.toggle('theme-dark');
+                    document.body.classList.toggle('theme-light');
+                });
+                
+                // Data panel toggle
+                document.getElementById('toggle-data-panel')?.addEventListener('click', () => {
+                    const dataPanel = document.querySelector('.viz-data-panel');
+                    
+                    if (dataPanel) {
+                        dataPanel.classList.toggle('collapsed');
+                    }
+                });
+            }
+            
+            syncUIControls() {
+                // Sync visualization type dropdown
+                const vizTypeSelect = document.getElementById('viz-type');
+                if (vizTypeSelect) {
+                    vizTypeSelect.value = this.settings.currentVisualization;
+                }
+                
+                // Sync animation speed slider and display
+                const animationSpeedSlider = document.getElementById('animation-speed');
+                const speedValue = document.getElementById('speed-value');
+                if (animationSpeedSlider && speedValue) {
+                    animationSpeedSlider.value = this.settings.animationSpeed;
+                    speedValue.textContent = `${this.settings.animationSpeed}x`;
+                }
+                
+                // Sync particle count slider and display
+                const particleCountSlider = document.getElementById('particle-count');
+                const particleValue = document.getElementById('particle-value');
+                if (particleCountSlider && particleValue) {
+                    particleCountSlider.value = this.settings.particleCount;
+                    particleValue.textContent = this.settings.particleCount;
+                }
+                
+                // Sync auto-rotate button state
+                const autoRotateBtn = document.getElementById('auto-rotate');
+                if (autoRotateBtn) {
+                    autoRotateBtn.classList.toggle('active', this.settings.autoRotate);
+                }
+            }
+            
+            onWindowResize() {
+                const container = document.getElementById('three-canvas-container');
+                const aspect = container.clientWidth / container.clientHeight;
+                
+                this.camera.aspect = aspect;
+                this.camera.updateProjectionMatrix();
+                
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+            
+            updateDataDisplay() {
+                // Update metrics
+                document.getElementById('total-repos').textContent = this.repositories.length;
+                document.getElementById('total-languages').textContent = this.languages.length;
+                document.getElementById('user-name-3d').textContent = this.userData?.name || this.userData?.login || 'Demo User';
+                
+                // Update visualization metrics
+                document.getElementById('total-nodes').textContent = this.repositoryNodes.length;
+                document.getElementById('total-connections').textContent = this.connectionLines.length;
+                document.getElementById('active-particles').textContent = this.languageParticles.reduce((total, particles) => {
+                    return total + (particles.geometry?.attributes?.position?.count || 0);
+                }, 0);
+            }
+            
+            updateVisualizationInfo() {
+                const info = {
+                    'repository-network': `${this.repositoryNodes.length} repositories, ${this.connectionLines.length} connections`,
+                    'language-galaxy': `${this.settings.particleCount} particles across ${this.languages.length} languages`,
+                    'contribution-terrain': 'Dynamic terrain based on contribution patterns',
+                    'code-universe': `${this.settings.particleCount * 6} particles across multiple layers`
+                };
+                
+                document.getElementById('viz-info').textContent = info[this.settings.currentVisualization] || '';
+                
+                // Update metrics display
+                this.updateDataDisplay();
+            }
+            
+            hideLoading() {
+                const loadingElement = document.getElementById('viz-loading');
+                if (loadingElement) {
+                    loadingElement.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingElement.style.display = 'none';
+                    }, 500);
+                } else {
+                    console.warn('Loading element not found');
+                }
+            }
+            
+            showError(message) {
+                console.error('3D Visualization Error:', message);
+                
+                // Hide loading
+                const loadingElement = document.getElementById('viz-loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                
+                // Show error
+                const errorElement = document.getElementById('viz-error');
+                const errorText = document.getElementById('error-text');
+                if (errorElement && errorText) {
+                    errorText.textContent = message;
+                    errorElement.style.display = 'flex';
+                }
+            }
+            
+            // Cleanup method
+            destroy() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                
+                window.removeEventListener('resize', this.onWindowResize);
+                this.clearScene();
+                
+                if (this.renderer) {
+                    this.renderer.dispose();
+                }
+            }
+        }
+
+        // Initialize 3D Visualizations when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🌌 DevPulse 3D Visualizations - Initializing...');
+            
+            window.devPulse3D = new DevPulse3D();
+            window.devPulse3D.init();
+        });
+
+        // Handle back to dashboard
+        document.getElementById('back-to-dashboard').addEventListener('click', () => {
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
